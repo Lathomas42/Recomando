@@ -14,10 +14,13 @@ class DataBaseHandler(object):
     """
     def __init__(self, path="/DataBases/RecomandoDB.db"):
         if(not os.path.isfile(path)):
+            self.table_list = []
+            self.con = sqlite3.connect(path)
+            self.cursor = self.con.cursor()
             self._setupdb()
-        self.con = sqlite3.connect(path)
-        self.cursor = self.con.cursor()
-        self.table_list = {}
+        else:
+            self.con = sqlite3.connect(path)
+            self.cursor = self.con.cursor()
 
     # ------------------Purchase Handling-------------------------------
     def add_purchase(self, UserID, ItemID, PurchaseID):
@@ -50,19 +53,19 @@ class DataBaseHandler(object):
         self._add_rows("ratings", rating_list)
 
     # ------------------Ratings Handling-------------------------------
-    def add_item(self, Name, Price, CategoryID):
+    def add_item(self, ItemID, Name, Price, CategoryID):
         """
         Adds a purchase element to the purchases dable with values
         corresponding to the arguments.
         """
-        self._add_rows("ratings", [Name, Price, CategoryID])
+        self._add_rows("items", [ItemID, Name, Price, CategoryID])
 
     def add_item_list(self, item_list):
         """
         adds rows to the purchases table from a list.
         list elements should be [UserID, ItemID, PurchaseID]
         """
-        self._add_rows("ratings", item_list)
+        self._add_rows("items", item_list)
 
     # ------------------Private Functions------------------------------
     def _setupdb(self):
@@ -72,7 +75,8 @@ class DataBaseHandler(object):
         # Then the ratings Database
         self._add_table("ratings", UserID=int, ItemID=int, Rating=int)
         # then the Items Database
-        self._add_table("items", Name=str, Price=float, CategoryID=int)
+        self._add_table("items", ItemID=int, Name=str,
+                        Price=float, CategoryID=int)
         # then finally the users
         self._add_table("users", UserID=int, Location=int)
 
@@ -104,10 +108,19 @@ class DataBaseHandler(object):
         adds rows to the specified table from a list.
         list elements should be [UserID, ItemID, PurchaseID]
         """
-        exec_str = "INSERT INTO {} VALUES (?, ?, ?)".format(table_name)
+        exec_str = "INSERT INTO {} VALUES (".format(table_name)
         if(type(rows[0]) != list):
+            # first make a string of one ? for each element
+            values_str = (", ?"*len(rows))[2:]
             # this means you are dealing with a single row
-            self.cursor.execute(exec_str, rows)
+            self.cursor.execute(exec_str + values_str + ")", rows)
         else:
+            values_str = (", ?"*len(rows[0]))[2:]
             # this means you are dealing with multiple rows
-            self.cursor.executemany(exec_str, rows)
+            self.cursor.executemany(exec_str + values_str + ")", rows)
+
+    def _update(self):
+        """
+        updates the tables to include the items added to other tables
+        """
+        return True
