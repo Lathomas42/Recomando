@@ -19,35 +19,64 @@ class DataBaseHandler(object):
         self.cursor = self.con.cursor()
         self.table_list = {}
 
+    # ------------------Purchase Handling-------------------------------
     def add_purchase(self, UserID, ItemID, PurchaseID):
         """
         Adds a purchase element to the purchases dable with values
         corresponding to the arguments.
         """
-        exec_str = "INSERT INTO purchases\
-                    VALUES ( {}, {}, {})".format(UserID, ItemID, PurchaseID)
-        self.con.execute(exec_str)
+        self._add_rows("purchases", [UserID, ItemID, PurchaseID])
 
     def add_purchase_list(self, purchase_list):
         """
         adds rows to the purchases table from a list.
         list elements should be [UserID, ItemID, PurchaseID]
         """
-        self.cursor.executemany("INSERT INTO purchases \
-                                 VALUES (?, ?, ?)", purchase_list)
+        self._add_rows("purchases", purchase_list)
 
+    # ------------------Ratings Handling-------------------------------
+    def add_rating(self, UserID, ItemID, Rating):
+        """
+        Adds a purchase element to the purchases dable with values
+        corresponding to the arguments.
+        """
+        self._add_rows("ratings", [UserID, ItemID, Rating])
+
+    def add_rating_list(self, rating_list):
+        """
+        adds rows to the purchases table from a list.
+        list elements should be [UserID, ItemID, PurchaseID]
+        """
+        self._add_rows("ratings", rating_list)
+
+    # ------------------Ratings Handling-------------------------------
+    def add_item(self, Name, Price, CategoryID):
+        """
+        Adds a purchase element to the purchases dable with values
+        corresponding to the arguments.
+        """
+        self._add_rows("ratings", [Name, Price, CategoryID])
+
+    def add_item_list(self, item_list):
+        """
+        adds rows to the purchases table from a list.
+        list elements should be [UserID, ItemID, PurchaseID]
+        """
+        self._add_rows("ratings", item_list)
+
+    # ------------------Private Functions------------------------------
     def _setupdb(self):
         print("Initializing Database...")
         # First setup the Purchases Database
-        self.add_table("purchases", UserID=int, ItemID=int, PurchaseID=int)
+        self._add_table("purchases", UserID=int, ItemID=int, PurchaseID=int)
         # Then the ratings Database
-        self.add_table("ratings", UserID=int, ItemID=int, Rating=int)
+        self._add_table("ratings", UserID=int, ItemID=int, Rating=int)
         # then the Items Database
-        self.add_table("items", Name=str, Price=float, CategoryID=int)
+        self._add_table("items", Name=str, Price=float, CategoryID=int)
         # then finally the users
-        self.add_table("users", UserID=int, Location=int)
+        self._add_table("users", UserID=int, Location=int)
 
-    def add_table(self, table_name, **kwargs):
+    def _add_table(self, table_name, **kwargs):
         """
         Initializes a table in the database with name table_name
         and value fields corresponding to kwargs.
@@ -70,3 +99,15 @@ class DataBaseHandler(object):
         self.con.execute(exec_str)
         self.table_list.append(table_name.lower())
 
+    def _add_rows(self, table_name, rows):
+        """
+        adds rows to the specified table from a list.
+        list elements should be [UserID, ItemID, PurchaseID]
+        """
+        exec_str = "INSERT INTO {} VALUES (?, ?, ?)".format(table_name)
+        if(type(rows[0]) != list):
+            # this means you are dealing with a single row
+            self.cursor.execute(exec_str, rows)
+        else:
+            # this means you are dealing with multiple rows
+            self.cursor.executemany(exec_str, rows)
